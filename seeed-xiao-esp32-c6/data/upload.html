@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Add to the compost</title>
+</head>
+<body>
+
+  <header>
+    <h1>Add to the compost</h1>
+    <p id="meter"></p>
+  </header>
+
+  <main>
+
+    <section>
+      <h2>A photo or an html page</h2>
+      <form id="fileForm">
+        <p>
+          <label for="name">Name</label><br>
+          <input type="text" id="name" name="name" maxlength="40" placeholder="e.g. trash pick 2" required>
+        </p>
+        <p>
+          <label for="file">File (.jpg or .html, under 1500 KB)</label><br>
+          <input type="file" id="file" name="file" accept=".jpg,.jpeg,.html,.htm" required>
+        </p>
+        <p>
+          <button type="submit">Add it</button>
+        </p>
+        <p id="fileMsg"></p>
+      </form>
+    </section>
+
+    <section>
+      <h2>A p5.js sketch</h2>
+      <form id="p5Form">
+        <p>
+          <label for="p5name">Name</label><br>
+          <input type="text" id="p5name" name="name" maxlength="40" placeholder="e.g. worms" required>
+        </p>
+        <p>
+          <label for="code">Sketch code (setup and draw, like in the p5 editor)</label><br>
+          <textarea id="code" name="code" rows="14" cols="38" required placeholder="function setup() {&#10;  createCanvas(windowWidth, windowHeight);&#10;}&#10;&#10;function draw() {&#10;  background(40);&#10;  ellipse(mouseX, mouseY, 40, 40);&#10;}"></textarea>
+        </p>
+        <p>
+          <button type="submit">Add it</button>
+        </p>
+        <p id="p5Msg"></p>
+      </form>
+    </section>
+
+    <section>
+      <h2>Already in the compost</h2>
+      <ul id="list"></ul>
+    </section>
+
+  </main>
+
+  <footer>
+    <p><a href="/">Back to the grid</a></p>
+  </footer>
+
+  <script>
+    const MAX = 1500 * 1024;
+    const kb = n => Math.round(n / 1024) + " KB";
+
+    // send a form, then go to the grid on success or show the board's message
+    async function post(url, body, msgEl) {
+      msgEl.textContent = "Sending...";
+      try {
+        const res = await fetch(url, { method: "POST", body });
+        if (res.ok) { location.href = "/"; return; }
+        msgEl.textContent = await res.text();
+      } catch (e) {
+        msgEl.textContent = "Could not reach the compost.";
+      }
+    }
+
+    document.getElementById("fileForm").addEventListener("submit", e => {
+      e.preventDefault();
+      const f = document.getElementById("file").files[0];
+      const msg = document.getElementById("fileMsg");
+      if (!f) { msg.textContent = "Choose a file first."; return; }
+      if (f.size > MAX) { msg.textContent = "That file is " + kb(f.size) + ". Make it smaller than 1500 KB."; return; }
+      post("/upload", new FormData(e.target), msg);
+    });
+
+    document.getElementById("p5Form").addEventListener("submit", e => {
+      e.preventDefault();
+      post("/p5", new URLSearchParams(new FormData(e.target)), document.getElementById("p5Msg"));
+    });
+
+    // list what is on the board, with a remove button per piece
+    async function refresh() {
+      const list = document.getElementById("list");
+      const meter = document.getElementById("meter");
+      try {
+        const data = await (await fetch("/api/list")).json();
+        meter.textContent = kb(data.free) + " free of " + kb(data.total);
+        list.innerHTML = "";
+        if (!data.items.length) list.innerHTML = "<li>Nothing yet.</li>";
+        for (const item of data.items) {
+          const li = document.createElement("li");
+          const a = document.createElement("a"); a.href = item.url; a.textContent = item.slug;
+          const info = document.createTextNode(" (" + item.type + ", " + kb(item.size) + ") ");
+          const b = document.createElement("button"); b.type = "button"; b.textContent = "remove";
+          b.onclick = async () => {
+            if (!confirm("Remove “" + item.slug + "”?")) return;
+            await fetch("/delete", { method: "POST", body: new URLSearchParams({ slug: item.slug }) });
+            refresh();
+          };
+          li.append(a, info, b);
+          list.appendChild(li);
+        }
+      } catch (e) { meter.textContent = "Could not reach the compost."; }
+    }
+    refresh();
+  </script>
+
+</body>
+</html>

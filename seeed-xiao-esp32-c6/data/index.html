@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Archive</title>
+
+    <style>
+      html, body {
+        margin: 0;
+        padding: 0;
+        background: #2b2b2b;      
+      }
+
+      p, h1, h2, h3, h4, h5, h6, body {
+        font-family: 'helvetica', sans-serif;
+        color: rgb(46, 46, 46);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      .thumb_container {
+        padding: 0;
+        margin: 100px 0px;
+      }
+
+      .row {
+        padding: 0;
+        display: flex;
+        flex-direction: row;
+        flex-wrap: wrap;
+        align-items: flex-start;
+        justify-content: center;
+        
+        max-width: 1200px; /* Adjust to desired grid limit */
+        margin: 0 auto;    /* Centers the container itself */
+      }
+
+      /* one square per piece; the work itself fills it */
+      .image_container {
+        margin: 10px;
+        position: relative;
+        width: 300px;
+        height: 300px;
+        overflow: hidden;
+        border-radius: 25px;
+        border: 1px solid #56565694;
+        background: #3d4233; /* shows while the piece is loading */
+        cursor: pointer;
+      }
+
+      .image_container img,
+      .image_container iframe {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        border: 0;
+        display: block;
+      }
+
+      .image_container img {
+        object-fit: cover;
+      }
+
+      /* live html / p5 preview: it draws, but the tap goes to the tile */
+      .image_container iframe {
+        pointer-events: none;
+        background: #2b2b2b;
+      }
+
+      /* caption over the work, at the bottom */
+      .image_container .after {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: flex-end;
+        transition: background .2s ease-out;
+      }
+
+      .image_container:hover .after {
+        background: rgba(0, 0, 0, .15);
+      }
+
+      .image_container .after p {
+        margin: 0;
+        width: 100%;
+        padding: 28px 16px 12px;
+        font-size: 90%;
+        color: #eee;
+        text-align: left;
+        background: linear-gradient(transparent, rgba(0, 0, 0, .65));
+      }
+
+      .image_container .after .kind {
+        font-size: 75%;
+        opacity: .7;
+        margin-left: 8px;
+        letter-spacing: .05em;
+      }
+
+      .empty {
+        text-align: center;
+        color: #888;
+      }
+
+      @media screen and (max-width: 600px) {
+        .thumb_container {
+          margin: 40px 10px;
+        }
+
+        /* two squares per row, whatever the phone width */
+        .image_container {
+          margin: 6px;
+          width: calc(50% - 12px);
+          height: auto;
+          aspect-ratio: 1 / 1;
+          border-radius: 18px;
+        }
+
+        .image_container .after p {
+          font-size: 80%;
+          padding: 20px 12px 10px;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <!-- Photo Grid: one tile per piece in /g, built from /api/list -->
+    <div class="thumb_container"> 
+      <div class="row" id="grid"></div>
+      <p class="empty" id="empty" hidden>Nothing in the compost yet.</p>
+    </div>  
+
+
+    <script>
+      // A sketch with a fixed canvas bigger than its square is scaled down to fit, not cropped.
+      // The canvas may appear a moment after the frame loads, so look for it a few times.
+      function fitFrame(frame, tile, tries = 0) {
+        let canvas = null;
+        try { canvas = frame.contentDocument && frame.contentDocument.querySelector("canvas"); } catch (e) { return; }
+        if (!canvas) {
+          if (tries < 20) setTimeout(() => fitFrame(frame, tile, tries + 1), 150);
+          return;
+        }
+        const w = canvas.offsetWidth, h = canvas.offsetHeight, size = tile.clientWidth;
+        if (!w || !h || (w <= size && h <= size)) return;
+        const s = Math.min(size / w, size / h);
+        frame.style.width = w + "px";
+        frame.style.height = h + "px";
+        frame.style.left = "50%";
+        frame.style.top = "50%";
+        frame.style.transform = "translate(-50%, -50%) scale(" + s + ")";
+      }
+
+      const grid = document.getElementById("grid");
+      const empty = document.getElementById("empty");
+      const label = { jpg: "photo", html: "html", p5: "p5.js" };
+
+      fetch("/api/list")
+        .then(r => r.json())
+        .then(data => {
+          empty.hidden = data.items.length > 0;
+          for (const item of data.items) {
+            const tile = document.createElement("div");
+            tile.className = "image_container";
+
+            if (item.type === "jpg") {
+              const img = document.createElement("img");
+              img.src = item.url;
+              img.alt = item.slug;
+              img.loading = "lazy";
+              tile.appendChild(img);
+            } else {
+              // html and p5 pieces run live inside the square
+              const frame = document.createElement("iframe");
+              frame.src = item.url;
+              frame.title = item.slug;
+              frame.loading = "lazy";
+              frame.tabIndex = -1;
+              frame.setAttribute("scrolling", "no");
+              frame.addEventListener("load", () => fitFrame(frame, tile));
+              tile.appendChild(frame);
+            }
+
+            const after = document.createElement("div");
+            after.className = "after";
+            const p = document.createElement("p");
+            p.textContent = item.slug.replace(/-/g, " ");
+            const kind = document.createElement("span");
+            kind.className = "kind";
+            kind.textContent = label[item.type] || item.type;
+            p.appendChild(kind);
+            after.appendChild(p);
+            tile.appendChild(after);
+
+            tile.addEventListener("click", () => { location.href = item.url; });
+            grid.appendChild(tile);
+          }
+        })
+        .catch(() => {
+          empty.textContent = "Could not reach the compost.";
+          empty.hidden = false;
+        });
+    </script>
+  </body>
+</html>
