@@ -142,7 +142,8 @@ R"rawliteral(
   ["/frame1.html", "/frame2.html"], //Shinji
   ["/skyline.p5.html"], //David
   ["/stereogram.html"], //Mariana
-  ["/n002.html", "/n004.png", "/n005.png"], //Orsi
+  ["/n004.html", "/n002.png", "/n005.png"], //Orsi
+
   ["/horia-stefania.p5.html"], //extra?
 ];
       const POPUP = "popup=yes, scrollbar=no, resize=no, width=320,height=320";
@@ -597,7 +598,7 @@ void handleHTML2() {
 // orsi images
 
 void handleImageOrs2() {
-  File file = LittleFS.open("/n004.png", "r");
+  File file = LittleFS.open("/n002.png", "r");
   if (!file) {
     server.send(404, "text/plain", "Image not found");
     return;
@@ -618,7 +619,7 @@ void handleImageOrs3() {
 // orsi htmls
 
 void handleHTMLors1() {
-  File file = LittleFS.open("/n002.html", "r");
+  File file = LittleFS.open("/n004.html", "r");
   if (!file) {
     server.send(404, "text/plain", "HTML file not found");
     return;
@@ -692,8 +693,8 @@ void setup() {
 
   server.on("/", handleRoot);
   server.on("/noise.svg", handleSvg);
-  server.on("/n002.html", handleHTMLors1);
-  server.on("/n004.png", handleImageOrs2);
+  server.on("/n004.html", handleHTMLors1);
+  server.on("/n002.png", handleImageOrs2);
   server.on("/n005.png", handleImageOrs3);
   server.on("/st_img1.png", handleImage);
   server.on("/st_img2.png", handleImage2);
