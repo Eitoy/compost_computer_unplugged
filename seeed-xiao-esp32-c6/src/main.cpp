@@ -70,7 +70,7 @@ R"rawliteral(
     <style>
       html {
         background: #2e2c2c;
-        background-image: url('noise.svg');
+        background-image: url('/noise.svg');
         background-blend-mode: exclusion;
       }
       body {
@@ -142,8 +142,7 @@ R"rawliteral(
   ["/frame1.html", "/frame2.html"], //Shinji
   ["/skyline.p5.html"], //David
   ["/stereogram.html"], //Mariana
-  ["/n004.html", "/n002.png", "/n005.png"], //Orsi
-
+  ["/n002.png", "/n004.html", "/n005.png"], //Orsi
   ["/horia-stefania.p5.html"], //extra?
 ];
       const POPUP = "popup=yes, scrollbar=no, resize=no, width=320,height=320";
@@ -533,7 +532,6 @@ R"rawliteral(
     </script>
   </body>
 </html>
-
 
 )rawliteral";
 
