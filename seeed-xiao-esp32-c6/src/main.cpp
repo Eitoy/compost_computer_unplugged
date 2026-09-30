@@ -49,10 +49,14 @@ pio device monitor --environment seeed_xiao_esp32_c6 --baud 115200
 const char* ssid = "The Legacy | Bucharest";
 const char* password = "kindness";
 
+// const char* ssid = "Coliberator_02";
+// const char* password = "coliberator";
+
 WebServer server(80);
 
 String htmlContent = 
 R"rawliteral(
+
 
 <!doctype html>
 <html lang="en">
@@ -134,14 +138,13 @@ R"rawliteral(
       const $ = (s) => document.querySelector(s);
       
       //ADD YOUR HTML HEREEEEEEE
-      const ROOM_PAGES = [
-        "frame1.html",
-        "frame2.html",
-        "03.png",
-        "04.png",
-        "07.png",
-        "bit.html",
-      ]; 
+  const ROOM_PAGES = [
+  ["/frame1.html", "/frame2.html"], //Shinji
+  ["/skyline.p5.html"], //David
+  ["/stereogram.html"], //Mariana
+  ["/n002.html", "/n004.png", "/n005.png"], //Orsi
+  ["/horia-stefania.p5.html"], //extra?
+];
       const POPUP = "popup=yes, scrollbar=no, resize=no, width=320,height=320";
 
       const hash = (s) => {
@@ -384,7 +387,7 @@ R"rawliteral(
             c: l + 2,
             w: 14,
             h: 5,
-            art: ROOM_PAGES[role[n]],
+             art: pick(ROOM_PAGES[role[n]]),  
           };
         }
 
@@ -547,6 +550,9 @@ void handleSvg() {
   file.close();
 }
 
+
+// htmls st
+
 void handleImage() {
   File file = LittleFS.open("/st_img1.png", "r");
   if (!file) {
@@ -567,16 +573,6 @@ void handleImage2() {
   file.close();
 }
 
-void handleImage3() {
-  File file = LittleFS.open("/02-dithered.png", "r");
-  if (!file) {
-    server.send(404, "text/plain", "Image not found");
-    return;
-  }
-  server.streamFile(file, "image/png");
-  file.close();
-}
-
 void handleHTML1() {
   File file = LittleFS.open("/frame1.html", "r");
   if (!file) {
@@ -586,6 +582,82 @@ void handleHTML1() {
   server.streamFile(file, "text/html");
   file.close();
 }
+
+void handleHTML2() {
+  File file = LittleFS.open("/frame2.html", "r");
+  if (!file) {
+    server.send(404, "text/plain", "HTML file not found");
+    return;
+  }
+  server.streamFile(file, "text/html");
+  file.close();
+}
+
+
+// orsi images
+
+void handleImageOrs2() {
+  File file = LittleFS.open("/n004.png", "r");
+  if (!file) {
+    server.send(404, "text/plain", "Image not found");
+    return;
+  }
+  server.streamFile(file, "image/png");
+  file.close();
+}
+
+void handleImageOrs3() {
+  File file = LittleFS.open("/n005.png", "r");
+  if (!file) {
+    server.send(404, "text/plain", "Image not found");
+    return;
+  }
+  server.streamFile(file, "image/png");
+  file.close();
+}
+// orsi htmls
+
+void handleHTMLors1() {
+  File file = LittleFS.open("/n002.html", "r");
+  if (!file) {
+    server.send(404, "text/plain", "HTML file not found");
+    return;
+  }
+  server.streamFile(file, "text/html");
+  file.close();
+}
+
+void handleHTMdavid() {
+  File file = LittleFS.open("/skyline.p5.html", "r");
+  if (!file) {
+    server.send(404, "text/plain", "HTML file not found");
+    return;
+  }
+  server.streamFile(file, "text/html");
+  file.close();
+}
+
+void handleHTMmariana() {
+  File file = LittleFS.open("/stereogram.html", "r");
+  if (!file) {
+    server.send(404, "text/plain", "HTML file not found");
+    return;
+  }
+  server.streamFile(file, "text/html");
+  file.close();
+}
+
+void handleHTMstefania() {
+  File file = LittleFS.open("/horia-stefania.p5.html", "r");
+  if (!file) {
+    server.send(404, "text/plain", "HTML file not found");
+    return;
+  }
+  server.streamFile(file, "text/html");
+  file.close();
+}
+
+// p5 lib
 
 void handleJsP5() {
   File file = LittleFS.open("/p5.min.js", "r");
@@ -619,9 +691,17 @@ void setup() {
   Serial.println(WiFi.localIP());
 
   server.on("/", handleRoot);
+  server.on("/noise.svg", handleSvg);
+  server.on("/n002.html", handleHTMLors1);
+  server.on("/n004.png", handleImageOrs2);
+  server.on("/n005.png", handleImageOrs3);
   server.on("/st_img1.png", handleImage);
   server.on("/st_img2.png", handleImage2);
   server.on("/frame1.html", handleHTML1);
+  server.on("/frame2.html", handleHTML2);
+  server.on("/skyline.p5.html", handleHTMdavid);
+  server.on("/stereogram.html", handleHTMmariana);
+  server.on("/horia-stefania.p5.html", handleHTMstefania);
   server.on("/p5.min.js", handleJsP5);
   server.begin();
   Serial.println("HTTP server started");

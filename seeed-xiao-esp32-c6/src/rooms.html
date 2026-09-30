@@ -1,3 +1,4 @@
+
 <!doctype html>
 <html lang="en">
   <head>
@@ -10,7 +11,7 @@
     <style>
       html {
         background: #2e2c2c;
-        background-image: url('/data/noise.svg');
+        background-image: url('noise.svg');
         background-blend-mode: exclusion;
       }
       body {
@@ -78,14 +79,13 @@
       const $ = (s) => document.querySelector(s);
       
       //ADD YOUR HTML HEREEEEEEE
-      const ROOM_PAGES = [
-        "/data/frame1.html",
-        "/data/frame2.html",
-        "/data/03.png",
-        "/data/04.png",
-        "/data/07.png",
-        "bit.html",
-      ]; 
+  const ROOM_PAGES = [
+  ["/data/frame1.html", "/data/frame2.html"], //Shinji
+  ["/data/skyline.p5.html"], //David
+  ["/data/stereogram.html"], //Mariana
+  ["/data/n002.html", "/data/n004.html", "/data/html.png"], //Orsi
+  ["/data/horia-stefania.p5.html"], //extra?
+];
       const POPUP = "popup=yes, scrollbar=no, resize=no, width=320,height=320";
 
       const hash = (s) => {
@@ -328,7 +328,7 @@
             c: l + 2,
             w: 14,
             h: 5,
-            art: ROOM_PAGES[role[n]],
+             art: pick(ROOM_PAGES[role[n]]),  
           };
         }
 
